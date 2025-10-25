@@ -85,9 +85,9 @@ export function HandCanvas({ results, videoRef }: HandCanvasProps) {
           }
         }
         
-        // Draw landmarks (purple dots)
-        ctx.fillStyle = '#a855f7';
-        ctx.strokeStyle = '#7c3aed';
+        // Draw landmarks (green dots)
+        ctx.fillStyle = '#22c55e';
+        ctx.strokeStyle = '#16a34a';
         ctx.lineWidth = 2;
         
         for (const landmark of landmarks) {
