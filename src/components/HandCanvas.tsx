@@ -1,16 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { Results, HAND_CONNECTIONS } from '@mediapipe/hands';
+import { Results } from '@mediapipe/hands';
 
 interface HandCanvasProps {
   results: Results | null;
   videoRef: React.RefObject<HTMLVideoElement>;
-}
-
-declare global {
-  interface Window {
-    drawConnectors: any;
-    drawLandmarks: any;
-  }
 }
 
 export function HandCanvas({ results, videoRef }: HandCanvasProps) {
@@ -58,51 +51,23 @@ export function HandCanvas({ results, videoRef }: HandCanvasProps) {
     ctx.save();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // Simple hand landmark visualization
     if (results.multiHandLandmarks) {
       for (const landmarks of results.multiHandLandmarks) {
-        try {
-          // Use global drawing functions if available
-          if (window.drawConnectors && window.drawLandmarks) {
-            window.drawConnectors(ctx, landmarks, HAND_CONNECTIONS, {
-              color: '#9333ea',
-              lineWidth: 4,
-            });
-            window.drawLandmarks(ctx, landmarks, {
-              color: '#a855f7',
-              fillColor: '#e9d5ff',
-              lineWidth: 2,
-              radius: 5,
-            });
-          } else {
-            // Fallback: draw simple dots for landmarks
-            ctx.fillStyle = '#a855f7';
-            for (const landmark of landmarks) {
-              ctx.beginPath();
-              ctx.arc(
-                landmark.x * canvas.width,
-                landmark.y * canvas.height,
-                5,
-                0,
-                2 * Math.PI
-              );
-              ctx.fill();
-            }
-          }
-        } catch (error) {
-          console.warn('Drawing error:', error);
-          // Fallback: draw simple dots
-          ctx.fillStyle = '#a855f7';
-          for (const landmark of landmarks) {
-            ctx.beginPath();
-            ctx.arc(
-              landmark.x * canvas.width,
-              landmark.y * canvas.height,
-              5,
-              0,
-              2 * Math.PI
-            );
-            ctx.fill();
-          }
+        // Draw simple dots for hand landmarks
+        ctx.fillStyle = '#a855f7';
+        ctx.strokeStyle = '#9333ea';
+        ctx.lineWidth = 2;
+        
+        for (let i = 0; i < landmarks.length; i++) {
+          const landmark = landmarks[i];
+          const x = landmark.x * canvas.width;
+          const y = landmark.y * canvas.height;
+          
+          ctx.beginPath();
+          ctx.arc(x, y, 4, 0, 2 * Math.PI);
+          ctx.fill();
+          ctx.stroke();
         }
       }
     }
