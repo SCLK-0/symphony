@@ -63,9 +63,6 @@ export function HandDetection({ onHandsDetected, videoRef }: HandDetectionProps)
             return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
           },
         });
-
-        // Detect if mobile device
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
         hands.setOptions({
           maxNumHands: 2,
