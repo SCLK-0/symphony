@@ -68,55 +68,36 @@ export function HandCanvas({ results, videoRef }: HandCanvasProps) {
       console.log('Drawing hands:', results.multiHandLandmarks.length); // Debug log
       
       for (const landmarks of results.multiHandLandmarks) {
-        // Mobile-optimized drawing
-        if (isMobile) {
-          // Simpler drawing for mobile - just dots, no lines
-          ctx.fillStyle = '#9333ea';
-          ctx.strokeStyle = '#7c3aed';
-          ctx.lineWidth = 2;
+        // Draw connections (purple lines) - same for both mobile and desktop
+        ctx.strokeStyle = '#9333ea';
+        ctx.lineWidth = isMobile ? 3 : 4; // Slightly thinner on mobile
+        ctx.lineCap = 'round';
+        
+        for (const connection of HAND_CONNECTIONS) {
+          const start = landmarks[connection[0]];
+          const end = landmarks[connection[1]];
           
-          for (const landmark of landmarks) {
-            const x = landmark.x * canvas.width;
-            const y = landmark.y * canvas.height;
-            
+          if (start && end) {
             ctx.beginPath();
-            ctx.arc(x, y, 8, 0, 2 * Math.PI); // Bigger dots for mobile
-            ctx.fill();
+            ctx.moveTo(start.x * canvas.width, start.y * canvas.height);
+            ctx.lineTo(end.x * canvas.width, end.y * canvas.height);
             ctx.stroke();
           }
-        } else {
-          // Full skeleton for desktop
-          // Draw connections (purple lines)
-          ctx.strokeStyle = '#9333ea';
-          ctx.lineWidth = 4;
-          ctx.lineCap = 'round';
+        }
+        
+        // Draw landmarks (purple dots)
+        ctx.fillStyle = '#a855f7';
+        ctx.strokeStyle = '#7c3aed';
+        ctx.lineWidth = 2;
+        
+        for (const landmark of landmarks) {
+          const x = landmark.x * canvas.width;
+          const y = landmark.y * canvas.height;
           
-          for (const connection of HAND_CONNECTIONS) {
-            const start = landmarks[connection[0]];
-            const end = landmarks[connection[1]];
-            
-            if (start && end) {
-              ctx.beginPath();
-              ctx.moveTo(start.x * canvas.width, start.y * canvas.height);
-              ctx.lineTo(end.x * canvas.width, end.y * canvas.height);
-              ctx.stroke();
-            }
-          }
-          
-          // Draw landmarks (purple dots)
-          ctx.fillStyle = '#a855f7';
-          ctx.strokeStyle = '#7c3aed';
-          ctx.lineWidth = 2;
-          
-          for (const landmark of landmarks) {
-            const x = landmark.x * canvas.width;
-            const y = landmark.y * canvas.height;
-            
-            ctx.beginPath();
-            ctx.arc(x, y, 6, 0, 2 * Math.PI);
-            ctx.fill();
-            ctx.stroke();
-          }
+          ctx.beginPath();
+          ctx.arc(x, y, isMobile ? 5 : 6, 0, 2 * Math.PI); // Slightly smaller on mobile
+          ctx.fill();
+          ctx.stroke();
         }
       }
     }
