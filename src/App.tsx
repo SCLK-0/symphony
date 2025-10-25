@@ -23,12 +23,20 @@ function App() {
   const [rightHandVol, setRightHandVol] = useState(0);
   const [isStarted, setIsStarted] = useState(false);
   const [showFaaah, setShowFaaah] = useState(false);
+  const [forceDesktop, setForceDesktop] = useState(false);
   const faaahAudioRef = useRef<HTMLAudioElement | null>(null);
   const lastFaaahTimeRef = useRef<number>(0);
 
-  // Detect mobile device with exception for 486x844 resolution
+  // Detect mobile device with exceptions for specific resolutions and desktop browsers
+  const isDesktopBrowser = /Chrome|Firefox|Safari|Edge|Opera/i.test(navigator.userAgent) && 
+                           !/Mobile|Android|iPhone|iPad/i.test(navigator.userAgent);
+  
+  const isExceptionResolution = (window.innerWidth === 486 && window.innerHeight === 844) ||
+                               (window.innerWidth >= 1024) || // Desktop width
+                               isDesktopBrowser;
+  
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) && 
-                   !(window.innerWidth === 486 && window.innerHeight === 844);
+                   !isExceptionResolution && !forceDesktop;
 
   const handleStart = async () => {
     const engine = new SymphonyAudioEngine();
@@ -211,7 +219,13 @@ function App() {
             </div>
           </div>
 
-          <div className="text-center">
+          <div className="text-center space-y-4">
+            <button
+              onClick={() => setForceDesktop(true)}
+              className="bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-full transition-all backdrop-blur-sm border border-white/20"
+            >
+              Try Desktop Version Anyway
+            </button>
             <p className="text-purple-200 text-sm">
               Follow us for updates on mobile support
             </p>
