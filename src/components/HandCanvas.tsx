@@ -1,10 +1,16 @@
 import { useEffect, useRef } from 'react';
 import { Results, HAND_CONNECTIONS } from '@mediapipe/hands';
-import { drawConnectors, drawLandmarks } from '@mediapipe/drawing_utils';
 
 interface HandCanvasProps {
   results: Results | null;
   videoRef: React.RefObject<HTMLVideoElement>;
+}
+
+declare global {
+  interface Window {
+    drawConnectors: any;
+    drawLandmarks: any;
+  }
 }
 
 export function HandCanvas({ results, videoRef }: HandCanvasProps) {
@@ -54,16 +60,50 @@ export function HandCanvas({ results, videoRef }: HandCanvasProps) {
 
     if (results.multiHandLandmarks) {
       for (const landmarks of results.multiHandLandmarks) {
-        drawConnectors(ctx, landmarks, HAND_CONNECTIONS, {
-          color: '#9333ea',
-          lineWidth: 4,
-        });
-        drawLandmarks(ctx, landmarks, {
-          color: '#a855f7',
-          fillColor: '#e9d5ff',
-          lineWidth: 2,
-          radius: 5,
-        });
+        try {
+          // Use global drawing functions if available
+          if (window.drawConnectors && window.drawLandmarks) {
+            window.drawConnectors(ctx, landmarks, HAND_CONNECTIONS, {
+              color: '#9333ea',
+              lineWidth: 4,
+            });
+            window.drawLandmarks(ctx, landmarks, {
+              color: '#a855f7',
+              fillColor: '#e9d5ff',
+              lineWidth: 2,
+              radius: 5,
+            });
+          } else {
+            // Fallback: draw simple dots for landmarks
+            ctx.fillStyle = '#a855f7';
+            for (const landmark of landmarks) {
+              ctx.beginPath();
+              ctx.arc(
+                landmark.x * canvas.width,
+                landmark.y * canvas.height,
+                5,
+                0,
+                2 * Math.PI
+              );
+              ctx.fill();
+            }
+          }
+        } catch (error) {
+          console.warn('Drawing error:', error);
+          // Fallback: draw simple dots
+          ctx.fillStyle = '#a855f7';
+          for (const landmark of landmarks) {
+            ctx.beginPath();
+            ctx.arc(
+              landmark.x * canvas.width,
+              landmark.y * canvas.height,
+              5,
+              0,
+              2 * Math.PI
+            );
+            ctx.fill();
+          }
+        }
       }
     }
 
