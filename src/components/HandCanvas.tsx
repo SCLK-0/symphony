@@ -62,20 +62,24 @@ export function HandCanvas({ results, videoRef }: HandCanvasProps) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (results.multiHandLandmarks) {
+      console.log('Drawing hands:', results.multiHandLandmarks.length); // Debug log
+      
       for (const landmarks of results.multiHandLandmarks) {
         // Draw connections (purple lines)
         ctx.strokeStyle = '#9333ea';
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 4; // Made thicker to be more visible
         ctx.lineCap = 'round';
         
         for (const connection of HAND_CONNECTIONS) {
           const start = landmarks[connection[0]];
           const end = landmarks[connection[1]];
           
-          ctx.beginPath();
-          ctx.moveTo(start.x * canvas.width, start.y * canvas.height);
-          ctx.lineTo(end.x * canvas.width, end.y * canvas.height);
-          ctx.stroke();
+          if (start && end) {
+            ctx.beginPath();
+            ctx.moveTo(start.x * canvas.width, start.y * canvas.height);
+            ctx.lineTo(end.x * canvas.width, end.y * canvas.height);
+            ctx.stroke();
+          }
         }
         
         // Draw landmarks (purple dots)
@@ -88,7 +92,7 @@ export function HandCanvas({ results, videoRef }: HandCanvasProps) {
           const y = landmark.y * canvas.height;
           
           ctx.beginPath();
-          ctx.arc(x, y, 5, 0, 2 * Math.PI);
+          ctx.arc(x, y, 6, 0, 2 * Math.PI); // Made bigger to be more visible
           ctx.fill();
           ctx.stroke();
         }

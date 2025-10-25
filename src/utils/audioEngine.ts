@@ -8,11 +8,19 @@ export class SymphonyAudioEngine {
   constructor() {
     this.audioContext = new AudioContext();
     this.masterGain = this.audioContext.createGain();
-    this.masterGain.gain.value = 0.25;
+    this.masterGain.gain.value = 0.15; // Reduced volume to prevent static
     this.analyser = this.audioContext.createAnalyser();
     this.analyser.fftSize = 2048;
+    this.analyser.smoothingTimeConstant = 0.8; // Smoother analysis
 
-    this.masterGain.connect(this.analyser);
+    // Add a low-pass filter to reduce harsh frequencies
+    const lowPassFilter = this.audioContext.createBiquadFilter();
+    lowPassFilter.type = 'lowpass';
+    lowPassFilter.frequency.value = 2000; // Cut frequencies above 2kHz
+    lowPassFilter.Q.value = 1;
+
+    this.masterGain.connect(lowPassFilter);
+    lowPassFilter.connect(this.analyser);
     this.analyser.connect(this.audioContext.destination);
   }
 
@@ -25,11 +33,11 @@ export class SymphonyAudioEngine {
     this.isPlaying = true;
 
     const chordNotes = [
-      { freq: 220.00, type: 'sine' as OscillatorType, gain: 0.03 },
-      { freq: 277.18, type: 'sine' as OscillatorType, gain: 0.025 },
-      { freq: 329.63, type: 'sine' as OscillatorType, gain: 0.03 },
-      { freq: 440.00, type: 'triangle' as OscillatorType, gain: 0.02 },
-      { freq: 554.37, type: 'triangle' as OscillatorType, gain: 0.015 },
+      { freq: 220.00, type: 'sine' as OscillatorType, gain: 0.015 },
+      { freq: 277.18, type: 'sine' as OscillatorType, gain: 0.012 },
+      { freq: 329.63, type: 'sine' as OscillatorType, gain: 0.015 },
+      { freq: 440.00, type: 'sine' as OscillatorType, gain: 0.01 },
+      { freq: 554.37, type: 'sine' as OscillatorType, gain: 0.008 },
     ];
 
     chordNotes.forEach((note, index) => {
