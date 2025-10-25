@@ -6,6 +6,16 @@ interface HandCanvasProps {
   videoRef: React.RefObject<HTMLVideoElement>;
 }
 
+// Hand connections for drawing lines between landmarks
+const HAND_CONNECTIONS = [
+  [0, 1], [1, 2], [2, 3], [3, 4], // Thumb
+  [0, 5], [5, 6], [6, 7], [7, 8], // Index finger
+  [0, 9], [9, 10], [10, 11], [11, 12], // Middle finger
+  [0, 13], [13, 14], [14, 15], [15, 16], // Ring finger
+  [0, 17], [17, 18], [18, 19], [19, 20], // Pinky
+  [5, 9], [9, 13], [13, 17] // Palm connections
+];
+
 export function HandCanvas({ results, videoRef }: HandCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -51,21 +61,34 @@ export function HandCanvas({ results, videoRef }: HandCanvasProps) {
     ctx.save();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Simple hand landmark visualization
     if (results.multiHandLandmarks) {
       for (const landmarks of results.multiHandLandmarks) {
-        // Draw simple dots for hand landmarks
-        ctx.fillStyle = '#a855f7';
+        // Draw connections (purple lines)
         ctx.strokeStyle = '#9333ea';
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        
+        for (const connection of HAND_CONNECTIONS) {
+          const start = landmarks[connection[0]];
+          const end = landmarks[connection[1]];
+          
+          ctx.beginPath();
+          ctx.moveTo(start.x * canvas.width, start.y * canvas.height);
+          ctx.lineTo(end.x * canvas.width, end.y * canvas.height);
+          ctx.stroke();
+        }
+        
+        // Draw landmarks (purple dots)
+        ctx.fillStyle = '#a855f7';
+        ctx.strokeStyle = '#7c3aed';
         ctx.lineWidth = 2;
         
-        for (let i = 0; i < landmarks.length; i++) {
-          const landmark = landmarks[i];
+        for (const landmark of landmarks) {
           const x = landmark.x * canvas.width;
           const y = landmark.y * canvas.height;
           
           ctx.beginPath();
-          ctx.arc(x, y, 4, 0, 2 * Math.PI);
+          ctx.arc(x, y, 5, 0, 2 * Math.PI);
           ctx.fill();
           ctx.stroke();
         }

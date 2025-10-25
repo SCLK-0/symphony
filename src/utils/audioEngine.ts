@@ -52,8 +52,9 @@ export class SymphonyAudioEngine {
     if (!this.isPlaying) this.startSymphony();
 
     if (leftHand) {
-      const frequency = 330 + (1 - leftHand.y) * 440;
-      const volume = Math.max(0.01, leftHand.openness * 0.06);
+      // Smoother frequency mapping with better range
+      const frequency = 200 + (1 - leftHand.y) * 600; // 200Hz to 800Hz
+      const volume = Math.max(0.005, Math.min(0.08, leftHand.openness * 0.08));
 
       this.updateOrCreateOscillator('left', frequency, volume, 'sine');
     } else {
@@ -61,8 +62,9 @@ export class SymphonyAudioEngine {
     }
 
     if (rightHand) {
-      const frequency = 440 + (1 - rightHand.y) * 550;
-      const volume = Math.max(0.01, rightHand.openness * 0.06);
+      // Smoother frequency mapping with better range  
+      const frequency = 300 + (1 - rightHand.y) * 800; // 300Hz to 1100Hz
+      const volume = Math.max(0.005, Math.min(0.08, rightHand.openness * 0.08));
 
       this.updateOrCreateOscillator('right', frequency, volume, 'triangle');
     } else {
@@ -89,16 +91,17 @@ export class SymphonyAudioEngine {
 
       gain.gain.linearRampToValueAtTime(
         volume,
-        this.audioContext.currentTime + 0.1
+        this.audioContext.currentTime + 0.05
       );
     } else {
-      existing.osc.frequency.exponentialRampToValueAtTime(
-        Math.max(20, frequency),
-        this.audioContext.currentTime + 0.1
+      // Smoother frequency transitions
+      existing.osc.frequency.linearRampToValueAtTime(
+        Math.max(50, frequency),
+        this.audioContext.currentTime + 0.05
       );
       existing.gain.gain.linearRampToValueAtTime(
         volume,
-        this.audioContext.currentTime + 0.1
+        this.audioContext.currentTime + 0.05
       );
     }
   }

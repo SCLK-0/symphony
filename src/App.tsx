@@ -33,7 +33,7 @@ function App() {
     engine.startSymphony();
     setIsStarted(true);
 
-    const audio = new Audio('./faaah.mp3');
+    const audio = new Audio('/symphony/faaah.mp3');
     audio.preload = 'auto';
     faaahAudioRef.current = audio;
   };
@@ -183,7 +183,7 @@ function App() {
               {showFaaah && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm z-20 animate-pulse">
                   <img
-                    src="./artworks-rnByyu0lyPqKzt3b-WhSvtw-t500x500.jpg"
+                    src="/symphony/artworks-rnByyu0lyPqKzt3b-WhSvtw-t500x500.jpg"
                     alt="FAAAH"
                     className="w-48 h-48 object-contain animate-bounce"
                   />
