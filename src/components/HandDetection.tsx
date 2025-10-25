@@ -14,39 +14,86 @@ export function HandDetection({ onHandsDetected, videoRef }: HandDetectionProps)
   useEffect(() => {
     if (!videoRef.current) return;
 
-    const hands = new Hands({
-      locateFile: (file) => {
-        return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
-      },
-    });
+    // Use dynamic import to ensure MediaPipe loads correctly
+    const initializeHands = async () => {
+      try {
+        const hands = new (window as any).Hands({
+          locateFile: (file: string) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+          },
+        });
 
-    hands.setOptions({
-      maxNumHands: 2,
-      modelComplexity: 1,
-      minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5,
-    });
+        hands.setOptions({
+          maxNumHands: 2,
+          modelComplexity: 1,
+          minDetectionConfidence: 0.5,
+          minTrackingConfidence: 0.5,
+        });
 
-    hands.onResults(onHandsDetected);
+        hands.onResults(onHandsDetected);
 
-    const camera = new Camera(videoRef.current, {
-      onFrame: async () => {
-        if (videoRef.current) {
-          await hands.send({ image: videoRef.current });
+        const camera = new Camera(videoRef.current!, {
+          onFrame: async () => {
+            if (videoRef.current) {
+              await hands.send({ image: videoRef.current });
+            }
+          },
+          width: 1280,
+          height: 720,
+        });
+
+        await camera.start();
+
+        handsRef.current = hands;
+        cameraRef.current = camera;
+      } catch (error) {
+        console.error('Failed to initialize MediaPipe Hands:', error);
+        // Fallback: try the regular import
+        try {
+          const hands = new Hands({
+            locateFile: (file) => {
+              return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+            },
+          });
+
+          hands.setOptions({
+            maxNumHands: 2,
+            modelComplexity: 1,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5,
+          });
+
+          hands.onResults(onHandsDetected);
+
+          const camera = new Camera(videoRef.current!, {
+            onFrame: async () => {
+              if (videoRef.current) {
+                await hands.send({ image: videoRef.current });
+              }
+            },
+            width: 1280,
+            height: 720,
+          });
+
+          await camera.start();
+
+          handsRef.current = hands;
+          cameraRef.current = camera;
+        } catch (fallbackError) {
+          console.error('Fallback MediaPipe initialization also failed:', fallbackError);
         }
-      },
-      width: 1280,
-      height: 720,
-    });
+      }
+    };
 
-    camera.start();
-
-    handsRef.current = hands;
-    cameraRef.current = camera;
+    initializeHands();
 
     return () => {
-      camera.stop();
-      hands.close();
+      if (cameraRef.current) {
+        cameraRef.current.stop();
+      }
+      if (handsRef.current) {
+        handsRef.current.close();
+      }
     };
   }, [onHandsDetected, videoRef]);
 
