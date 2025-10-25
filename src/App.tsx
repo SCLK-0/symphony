@@ -26,8 +26,9 @@ function App() {
   const faaahAudioRef = useRef<HTMLAudioElement | null>(null);
   const lastFaaahTimeRef = useRef<number>(0);
 
-  // Detect mobile device
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  // Detect mobile device with exception for 486x844 resolution
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) && 
+                   !(window.innerWidth === 486 && window.innerHeight === 844);
 
   const handleStart = async () => {
     const engine = new SymphonyAudioEngine();
@@ -65,22 +66,36 @@ function App() {
   }, []);
 
   const calculateHandOpenness = (landmarks: any[]): number => {
+    // Use wrist as reference point for more accurate measurement
+    const wrist = landmarks[0];
     const thumb = landmarks[4];
     const index = landmarks[8];
     const middle = landmarks[12];
     const ring = landmarks[16];
     const pinky = landmarks[20];
-    const palm = landmarks[0];
 
+    // Calculate distances from fingertips to wrist
     const distances = [
-      Math.hypot(thumb.x - palm.x, thumb.y - palm.y),
-      Math.hypot(index.x - palm.x, index.y - palm.y),
-      Math.hypot(middle.x - palm.x, middle.y - palm.y),
-      Math.hypot(ring.x - palm.x, ring.y - palm.y),
-      Math.hypot(pinky.x - palm.x, pinky.y - palm.y),
+      Math.hypot(thumb.x - wrist.x, thumb.y - wrist.y),
+      Math.hypot(index.x - wrist.x, index.y - wrist.y),
+      Math.hypot(middle.x - wrist.x, middle.y - wrist.y),
+      Math.hypot(ring.x - wrist.x, ring.y - wrist.y),
+      Math.hypot(pinky.x - wrist.x, pinky.y - wrist.y),
     ];
 
-    return distances.reduce((a, b) => a + b, 0) / distances.length;
+    // Also check if fingers are curled by comparing tip to knuckle positions
+    const indexCurled = landmarks[8].y > landmarks[6].y; // Index tip below middle joint
+    const middleCurled = landmarks[12].y > landmarks[10].y; // Middle tip below middle joint
+    const ringCurled = landmarks[16].y > landmarks[14].y; // Ring tip below middle joint
+    const pinkyCurled = landmarks[20].y > landmarks[18].y; // Pinky tip below middle joint
+    
+    const curledFingers = [indexCurled, middleCurled, ringCurled, pinkyCurled].filter(Boolean).length;
+    
+    // If most fingers are curled, reduce openness significantly
+    const baseOpenness = distances.reduce((a, b) => a + b, 0) / distances.length;
+    const curledPenalty = curledFingers * 0.02; // Reduce openness for each curled finger
+    
+    return Math.max(0, baseOpenness - curledPenalty);
   };
 
   const onHandsDetected = useCallback((handResults: Results) => {
@@ -149,7 +164,7 @@ function App() {
         setRightHandVol(0);
       }
 
-      if (hasLeft && hasRight && leftOpenness < 0.15 && rightOpenness < 0.15) {
+      if (hasLeft && hasRight && leftOpenness < 0.08 && rightOpenness < 0.08) {
         triggerFaaah();
       }
 
