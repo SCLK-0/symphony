@@ -23,12 +23,16 @@ export function HandDetection({ onHandsDetected, videoRef }: HandDetectionProps)
 
     const initializeCamera = async () => {
       try {
-        // Get camera stream
+        // Detect if mobile device
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        // Get camera stream with mobile-optimized settings
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            facingMode: 'user'
+            width: { ideal: isMobile ? 640 : 1280 },
+            height: { ideal: isMobile ? 480 : 720 },
+            facingMode: 'user',
+            frameRate: { ideal: isMobile ? 15 : 30 } // Lower frame rate on mobile
           }
         });
 
@@ -60,11 +64,14 @@ export function HandDetection({ onHandsDetected, videoRef }: HandDetectionProps)
           },
         });
 
+        // Detect if mobile device
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
         hands.setOptions({
           maxNumHands: 2,
-          modelComplexity: 1,
-          minDetectionConfidence: 0.7,
-          minTrackingConfidence: 0.7,
+          modelComplexity: isMobile ? 0 : 1, // Use lighter model on mobile
+          minDetectionConfidence: isMobile ? 0.6 : 0.7,
+          minTrackingConfidence: isMobile ? 0.6 : 0.7,
         });
 
         hands.onResults(onHandsDetected);

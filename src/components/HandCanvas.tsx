@@ -58,6 +58,9 @@ export function HandCanvas({ results, videoRef }: HandCanvasProps) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Detect mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
     ctx.save();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -65,36 +68,55 @@ export function HandCanvas({ results, videoRef }: HandCanvasProps) {
       console.log('Drawing hands:', results.multiHandLandmarks.length); // Debug log
       
       for (const landmarks of results.multiHandLandmarks) {
-        // Draw connections (purple lines)
-        ctx.strokeStyle = '#9333ea';
-        ctx.lineWidth = 4; // Made thicker to be more visible
-        ctx.lineCap = 'round';
-        
-        for (const connection of HAND_CONNECTIONS) {
-          const start = landmarks[connection[0]];
-          const end = landmarks[connection[1]];
+        // Mobile-optimized drawing
+        if (isMobile) {
+          // Simpler drawing for mobile - just dots, no lines
+          ctx.fillStyle = '#9333ea';
+          ctx.strokeStyle = '#7c3aed';
+          ctx.lineWidth = 2;
           
-          if (start && end) {
+          for (const landmark of landmarks) {
+            const x = landmark.x * canvas.width;
+            const y = landmark.y * canvas.height;
+            
             ctx.beginPath();
-            ctx.moveTo(start.x * canvas.width, start.y * canvas.height);
-            ctx.lineTo(end.x * canvas.width, end.y * canvas.height);
+            ctx.arc(x, y, 8, 0, 2 * Math.PI); // Bigger dots for mobile
+            ctx.fill();
             ctx.stroke();
           }
-        }
-        
-        // Draw landmarks (purple dots)
-        ctx.fillStyle = '#a855f7';
-        ctx.strokeStyle = '#7c3aed';
-        ctx.lineWidth = 2;
-        
-        for (const landmark of landmarks) {
-          const x = landmark.x * canvas.width;
-          const y = landmark.y * canvas.height;
+        } else {
+          // Full skeleton for desktop
+          // Draw connections (purple lines)
+          ctx.strokeStyle = '#9333ea';
+          ctx.lineWidth = 4;
+          ctx.lineCap = 'round';
           
-          ctx.beginPath();
-          ctx.arc(x, y, 6, 0, 2 * Math.PI); // Made bigger to be more visible
-          ctx.fill();
-          ctx.stroke();
+          for (const connection of HAND_CONNECTIONS) {
+            const start = landmarks[connection[0]];
+            const end = landmarks[connection[1]];
+            
+            if (start && end) {
+              ctx.beginPath();
+              ctx.moveTo(start.x * canvas.width, start.y * canvas.height);
+              ctx.lineTo(end.x * canvas.width, end.y * canvas.height);
+              ctx.stroke();
+            }
+          }
+          
+          // Draw landmarks (purple dots)
+          ctx.fillStyle = '#a855f7';
+          ctx.strokeStyle = '#7c3aed';
+          ctx.lineWidth = 2;
+          
+          for (const landmark of landmarks) {
+            const x = landmark.x * canvas.width;
+            const y = landmark.y * canvas.height;
+            
+            ctx.beginPath();
+            ctx.arc(x, y, 6, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+          }
         }
       }
     }
