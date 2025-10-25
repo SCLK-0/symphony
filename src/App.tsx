@@ -27,16 +27,8 @@ function App() {
   const faaahAudioRef = useRef<HTMLAudioElement | null>(null);
   const lastFaaahTimeRef = useRef<number>(0);
 
-  // Detect mobile device with exceptions for specific resolutions and desktop browsers
-  const isDesktopBrowser = /Chrome|Firefox|Safari|Edge|Opera/i.test(navigator.userAgent) && 
-                           !/Mobile|Android|iPhone|iPad/i.test(navigator.userAgent);
-  
-  const isExceptionResolution = (window.innerWidth === 486 && window.innerHeight === 844) ||
-                               (window.innerWidth >= 1024) || // Desktop width
-                               isDesktopBrowser;
-  
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) && 
-                   !isExceptionResolution && !forceDesktop;
+  // Mobile restriction removed - show full app for everyone
+  const isMobile = false;
 
   const handleStart = async () => {
     const engine = new SymphonyAudioEngine();
@@ -74,15 +66,43 @@ function App() {
   }, []);
 
   const calculateHandOpenness = (landmarks: any[]): number => {
-    // Use wrist as reference point for more accurate measurement
+    // More sophisticated fist detection using multiple criteria
     const wrist = landmarks[0];
+    
+    // Fingertip landmarks
     const thumb = landmarks[4];
     const index = landmarks[8];
     const middle = landmarks[12];
     const ring = landmarks[16];
     const pinky = landmarks[20];
-
-    // Calculate distances from fingertips to wrist
+    
+    // Knuckle/joint landmarks for comparison
+    const thumbJoint = landmarks[3];
+    const indexJoint = landmarks[6];
+    const middleJoint = landmarks[10];
+    const ringJoint = landmarks[14];
+    const pinkyJoint = landmarks[18];
+    
+    // Check if each finger is curled (tip is closer to wrist than joint)
+    const thumbCurled = Math.hypot(thumb.x - wrist.x, thumb.y - wrist.y) < 
+                       Math.hypot(thumbJoint.x - wrist.x, thumbJoint.y - wrist.y) + 0.02;
+    
+    const indexCurled = Math.hypot(index.x - wrist.x, index.y - wrist.y) < 
+                       Math.hypot(indexJoint.x - wrist.x, indexJoint.y - wrist.y) + 0.02;
+    
+    const middleCurled = Math.hypot(middle.x - wrist.x, middle.y - wrist.y) < 
+                        Math.hypot(middleJoint.x - wrist.x, middleJoint.y - wrist.y) + 0.02;
+    
+    const ringCurled = Math.hypot(ring.x - wrist.x, ring.y - wrist.y) < 
+                      Math.hypot(ringJoint.x - wrist.x, ringJoint.y - wrist.y) + 0.02;
+    
+    const pinkyCurled = Math.hypot(pinky.x - wrist.x, pinky.y - wrist.y) < 
+                       Math.hypot(pinkyJoint.x - wrist.x, pinkyJoint.y - wrist.y) + 0.02;
+    
+    // Count curled fingers
+    const curledFingers = [thumbCurled, indexCurled, middleCurled, ringCurled, pinkyCurled].filter(Boolean).length;
+    
+    // Calculate base openness from fingertip distances
     const distances = [
       Math.hypot(thumb.x - wrist.x, thumb.y - wrist.y),
       Math.hypot(index.x - wrist.x, index.y - wrist.y),
@@ -90,20 +110,18 @@ function App() {
       Math.hypot(ring.x - wrist.x, ring.y - wrist.y),
       Math.hypot(pinky.x - wrist.x, pinky.y - wrist.y),
     ];
-
-    // Also check if fingers are curled by comparing tip to knuckle positions
-    const indexCurled = landmarks[8].y > landmarks[6].y; // Index tip below middle joint
-    const middleCurled = landmarks[12].y > landmarks[10].y; // Middle tip below middle joint
-    const ringCurled = landmarks[16].y > landmarks[14].y; // Ring tip below middle joint
-    const pinkyCurled = landmarks[20].y > landmarks[18].y; // Pinky tip below middle joint
     
-    const curledFingers = [indexCurled, middleCurled, ringCurled, pinkyCurled].filter(Boolean).length;
+    const avgDistance = distances.reduce((a, b) => a + b, 0) / distances.length;
     
-    // If most fingers are curled, reduce openness significantly
-    const baseOpenness = distances.reduce((a, b) => a + b, 0) / distances.length;
-    const curledPenalty = curledFingers * 0.02; // Reduce openness for each curled finger
+    // Heavy penalty for curled fingers (fist detection)
+    const curlPenalty = curledFingers * 0.05;
     
-    return Math.max(0, baseOpenness - curledPenalty);
+    // If 4 or more fingers are curled, it's definitely a fist
+    if (curledFingers >= 4) {
+      return Math.max(0, avgDistance - 0.15);
+    }
+    
+    return Math.max(0, avgDistance - curlPenalty);
   };
 
   const onHandsDetected = useCallback((handResults: Results) => {
@@ -172,7 +190,7 @@ function App() {
         setRightHandVol(0);
       }
 
-      if (hasLeft && hasRight && leftOpenness < 0.08 && rightOpenness < 0.08) {
+      if (hasLeft && hasRight && leftOpenness < 0.05 && rightOpenness < 0.05) {
         triggerFaaah();
       }
 
