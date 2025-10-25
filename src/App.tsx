@@ -26,6 +26,9 @@ function App() {
   const faaahAudioRef = useRef<HTMLAudioElement | null>(null);
   const lastFaaahTimeRef = useRef<number>(0);
 
+  // Detect mobile device
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
   const handleStart = async () => {
     const engine = new SymphonyAudioEngine();
     audioEngineRef.current = engine;
@@ -163,6 +166,45 @@ function App() {
     }
   }, [triggerFaaah]);
 
+
+  // Mobile coming soon screen
+  if (isMobile) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center px-4">
+        <div className="text-center">
+          <div className="mb-8">
+            <div className="w-24 h-24 mx-auto mb-6 bg-white/20 rounded-full flex items-center justify-center">
+              <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+              </svg>
+            </div>
+            <h1 className="text-4xl font-light text-white mb-4">A Symphony to You</h1>
+            <p className="text-xl text-purple-100 mb-8">Hand-controlled music creation</p>
+          </div>
+          
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 mb-8">
+            <h2 className="text-2xl font-medium text-white mb-4">Coming to Mobile Soon</h2>
+            <p className="text-purple-100 leading-relaxed mb-6">
+              We're working hard to bring the full hand tracking experience to mobile devices. 
+              For now, please visit us on a desktop or laptop computer for the best experience.
+            </p>
+            <div className="flex items-center justify-center space-x-2 text-purple-200">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M20 3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h3l-1 1v2h12v-2l-1-1h3c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 13H4V5h16v11z"/>
+              </svg>
+              <span>Best experienced on desktop</span>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <p className="text-purple-200 text-sm">
+              Follow us for updates on mobile support
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
